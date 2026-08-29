@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://shuguang-rednote.wicky9073.chatgpt.site"),
   title: "薯光 · 小红书内容创作工作台",
   description: "从选题到成稿：生成标题、正文结构和标签，并在发布前完成内容检查。",
   applicationName: "薯光",
