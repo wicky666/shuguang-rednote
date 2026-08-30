@@ -40,8 +40,9 @@ npm run build:minitool
 
 会生成：
 
-- `minitool-dist/shuguang-minitool.zip`：上传到创作服务平台「部署小工具」
-- `minitool-dist/unpacked/`：打包前的静态文件，可本地用任意静态服务器预览
+- `minitool-dist/shuguang-minitool.zip`：本地构建产物
+- `releases/shuguang-minitool.zip`：已提交到仓库，可直接从 GitHub 下载上传
+- `releases/shuguang-icon.png`：小工具图标
 
 上传时建议填写：
 

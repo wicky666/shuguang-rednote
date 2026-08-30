@@ -132,7 +132,13 @@ async function main() {
     process.exit(1);
   }
 
+  const releasesDir = path.join(root, "releases");
+  await mkdir(releasesDir, { recursive: true });
+  await copyFile(zipPath, path.join(releasesDir, "shuguang-minitool.zip"));
+  await copyFile(path.join(root, "public", "minitool-icon.png"), path.join(releasesDir, "shuguang-icon.png"));
+
   console.log(`Mini-tool zip ready: ${zipPath} (${sizeMb.toFixed(2)}MB)`);
+  console.log(`Also copied to: ${path.join(releasesDir, "shuguang-minitool.zip")}`);
 }
 
 await main();
