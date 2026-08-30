@@ -380,3 +380,31 @@ html.minitool .xhs-copy-all:hover,
 html.minitool .xhs-generate:hover {
   transform: none;
 }
+
+html.minitool .xhs-shell { display: block; }
+html.minitool .xhs-sidebar {
+  position: static; width: 100%; height: 68px; padding: 0 18px;
+  flex-direction: row; align-items: center; overflow: visible;
+}
+html.minitool .xhs-brand { padding: 0; border: 0; }
+html.minitool .xhs-brand-mark { width: 34px; height: 34px; }
+html.minitool .xhs-nav { margin-left: auto; padding: 0; display: flex; }
+html.minitool .xhs-nav-label,
+html.minitool .xhs-nav button span,
+html.minitool .xhs-sidebar-section,
+html.minitool .xhs-sidebar-tip { display: none; }
+html.minitool .xhs-nav button { width: 38px; height: 38px; margin: 0 1px; padding: 0; justify-content: center; }
+html.minitool .xhs-nav button.active { box-shadow: none; }
+html.minitool .xhs-main { width: 100%; }
+html.minitool .xhs-topbar { height: auto; min-height: 64px; padding: 12px 16px; gap: 10px; }
+html.minitool .xhs-local-status, html.minitool .xhs-eyebrow { display: none; }
+html.minitool .xhs-mobile-only { display: inline-flex; }
+html.minitool .xhs-intro { min-height: 0; padding: 22px 18px; }
+html.minitool .xhs-intro-decoration { display: none; }
+html.minitool .xhs-workspace { width: calc(100% - 24px); margin: 12px auto 24px; grid-template-columns: 1fr; }
+html.minitool .xhs-preview-column { width: min(350px, 100%); justify-self: center; }
+html.minitool .xhs-preview-sticky { position: static; }
+html.minitool .xhs-panel { padding: 18px 16px; }
+html.minitool .xhs-type-grid { grid-template-columns: 1fr 1fr; }
+html.minitool .xhs-two-fields { grid-template-columns: 1fr; gap: 0; }
+html.minitool .xhs-footer { padding: 18px; flex-direction: column; gap: 8px; text-align: center; }

@@ -49,6 +49,7 @@ async function normalizeBundle() {
     await readFile(path.join(root, "minitool", "index.html"), "utf8"),
     "utf8",
   );
+  await copyFile(path.join(root, "public", "favicon.svg"), path.join(unpacked, "favicon.svg"));
 }
 
 async function validate(unpackedDir) {
