@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  Bookmark, Check, ChevronRight, Clock3, Copy, Download, FileText,
+  Bookmark, Check, ChevronRight, Clock3, Copy, FileText,
   Hash, LayoutTemplate, Lightbulb, PenLine, RefreshCw, Send,
-  ShieldCheck, Smartphone, Sparkles, Trash2, TrendingUp,
+  ShieldCheck, Smartphone, Sparkles, Trash2, TrendingUp, X,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { clipChars, formatFullNote, getMiniTool, renderCoverDataUrl } from "../lib/minitool";
 
 type ContentType = "干货教程" | "好物种草" | "探店体验" | "生活记录";
 type Tone = "真诚分享" | "轻松活泼" | "专业清晰" | "温柔治愈";
@@ -162,6 +163,11 @@ export function RedNoteStudio() {
   const [copied, setCopied] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [activeNav, setActiveNav] = useState("创作工作台");
+  const [copySheet, setCopySheet] = useState<{ title: string; text: string } | null>(null);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showDrafts, setShowDrafts] = useState(false);
+  const [publishState, setPublishState] = useState<"idle" | "busy" | "done" | "error">("idle");
+  const [publishHint, setPublishHint] = useState("");
 
   useEffect(() => {
     let timer: number | undefined;
@@ -198,36 +204,49 @@ export function RedNoteStudio() {
     window.setTimeout(() => setSaved(false), 1800);
   };
 
-  const copyText = async (value: string, label: string) => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(value);
-      } else {
-        const helper = document.createElement("textarea");
-        helper.value = value;
-        helper.style.position = "fixed";
-        helper.style.opacity = "0";
-        document.body.appendChild(helper);
-        helper.select();
-        document.execCommand("copy");
-        helper.remove();
-      }
-      setCopied(label);
-      window.setTimeout(() => setCopied(null), 1600);
-    } catch { setCopied(null); }
+  const copyText = (value: string, label: string) => {
+    setCopySheet({ title: label, text: value });
+    setCopied(label);
+    window.setTimeout(() => setCopied(null), 1600);
   };
 
-  const copyAll = () => void copyText(`${draft.selectedTitle}\n\n${draft.body}\n\n${draft.tags.map((tag) => `#${tag}`).join(" ")}`, "全部");
+  const copyAll = () => copyText(formatFullNote(draft), "整篇笔记");
 
-  const exportDraft = () => {
-    const text = `${draft.selectedTitle}\n\n${draft.body}\n\n${draft.tags.map((tag) => `#${tag}`).join(" ")}`;
-    const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    const safeName = (draft.topic || "小红书笔记").replace(/[<>:"/\\|?*]/g, "-").slice(0, 40);
-    link.download = `${safeName}.txt`;
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  const publishNote = async () => {
+    const miniTool = getMiniTool();
+    const cover = renderCoverDataUrl(draft);
+    if (!cover) {
+      setPublishState("error");
+      setPublishHint("封面生成失败，请重试");
+      return;
+    }
+    if (!miniTool) {
+      setCopySheet({
+        title: "整篇笔记",
+        text: formatFullNote(draft),
+      });
+      setPublishState("error");
+      setPublishHint("当前不在小红书小工具容器中。请先长按复制全文，或把 zip 上传到创作服务平台后再发布。");
+      return;
+    }
+    setPublishState("busy");
+    setPublishHint("正在打开发布页…");
+    try {
+      await miniTool.postNote({
+        title: clipChars(draft.selectedTitle, 20),
+        content: clipChars(`${draft.body}\n\n${draft.tags.map((tag) => `#${tag}`).join(" ")}`, 1000),
+        pageType: "photo_publish",
+        mediaInfo: { image_resources: [{ url: cover }] },
+        tags: draft.tags.join(","),
+      });
+      setPublishState("done");
+      setPublishHint("已唤起小红书发布页，请确认后发布");
+      window.setTimeout(() => setPublishState("idle"), 2400);
+    } catch (error) {
+      setPublishState("error");
+      const message = error && typeof error === "object" && "errMsg" in error ? String(error.errMsg) : "发布失败，请稍后重试";
+      setPublishHint(message);
+    }
   };
 
   const loadDraft = (item: Draft) => {
@@ -280,7 +299,8 @@ export function RedNoteStudio() {
           <div><span className="xhs-eyebrow">CONTENT WORKSPACE</span><h1>{activeNav}</h1></div>
           <div className="xhs-top-actions">
             <span className="xhs-local-status"><span /> 已在本机保存</span>
-            <button className="xhs-ghost-button" type="button" onClick={exportDraft}><Download size={17} /> 导出</button>
+            <button className="xhs-ghost-button xhs-mobile-only" type="button" onClick={() => setShowDrafts(true)}><FileText size={17} /> 草稿</button>
+            <button className="xhs-ghost-button" type="button" onClick={copyAll}><Copy size={17} /> 全文</button>
             <button className="xhs-save-button" type="button" onClick={saveDraft}>{saved ? <Check size={17} /> : <Bookmark size={17} />}{saved ? "已保存" : "保存草稿"}</button>
           </div>
         </header>
@@ -306,7 +326,7 @@ export function RedNoteStudio() {
             <div className="xhs-panel xhs-result-panel" id="title-ideas">
               <div className="xhs-panel-heading"><div><span className="xhs-step">02</span><h3>挑选一个标题</h3></div><button className="xhs-text-button" type="button" onClick={generate}><RefreshCw size={15} /> 换一组</button></div>
               <div className="xhs-title-list">{draft.titles.map((title, index) => <button className={draft.selectedTitle === title ? "selected" : ""} key={`${title}-${index}`} type="button" onClick={() => setDraft({ ...draft, selectedTitle: title })}><span className="xhs-title-index">{String(index + 1).padStart(2, "0")}</span><span className="xhs-title-copy">{title}<small>{Array.from(title).length} 字</small></span><span className="xhs-title-check">{draft.selectedTitle === title && <Check size={15} />}</span></button>)}</div>
-              <div className="xhs-body-heading"><div><span className="xhs-step">03</span><h3>编辑正文</h3></div><button className="xhs-text-button" type="button" onClick={() => void copyText(draft.body, "正文")}>{copied === "正文" ? <Check size={15} /> : <Copy size={15} />}{copied === "正文" ? "已复制" : "复制正文"}</button></div>
+              <div className="xhs-body-heading"><div><span className="xhs-step">03</span><h3>编辑正文</h3></div><button className="xhs-text-button" type="button" onClick={() => copyText(draft.body, "正文")}>{copied === "正文" ? <Check size={15} /> : <Copy size={15} />}{copied === "正文" ? "已打开" : "查看正文"}</button></div>
               <textarea aria-label="笔记正文" className="xhs-body-editor" value={draft.body} onChange={(event) => setDraft({ ...draft, body: event.target.value })} />
               <div className="xhs-body-meta"><span>{metrics.bodyLength} 字</span><span>建议 300–800 字</span></div>
               <div className="xhs-tags-heading" id="tag-helper"><h4><Hash size={16} /> 推荐标签</h4><span>{draft.tags.length} 个</span></div>
@@ -330,13 +350,92 @@ export function RedNoteStudio() {
               </div>
 
               <div className="xhs-check-card" id="content-check"><div className="xhs-check-heading"><ShieldCheck size={17} /><strong>发布前检查</strong></div><div className="xhs-check-list"><div className={metrics.titleLength <= 28 ? "pass" : "warn"}><span>{metrics.titleLength <= 28 ? <Check size={13} /> : "!"}</span><p>标题长度<strong>{metrics.titleLength} 字</strong></p></div><div className={metrics.keywordHit ? "pass" : "warn"}><span>{metrics.keywordHit ? <Check size={13} /> : "!"}</span><p>关键词布局<strong>{metrics.keywordHit ? "已覆盖" : "待补充"}</strong></p></div><div className={metrics.riskyMatches.length === 0 ? "pass" : "warn"}><span>{metrics.riskyMatches.length === 0 ? <Check size={13} /> : "!"}</span><p>高风险用语<strong>{metrics.riskyMatches.length === 0 ? "未发现" : metrics.riskyMatches.join("、")}</strong></p></div></div></div>
-              <button className="xhs-copy-all" type="button" onClick={copyAll}>{copied === "全部" ? <Check size={18} /> : <Copy size={18} />}{copied === "全部" ? "整篇笔记已复制" : "复制整篇笔记"}</button>
+              <button className="xhs-copy-all" type="button" onClick={copyAll}>{copied === "整篇笔记" ? <Check size={18} /> : <Copy size={18} />}{copied === "整篇笔记" ? "已打开全文" : "查看整篇笔记"}</button>
+              <button className="xhs-publish" type="button" onClick={() => void publishNote()} disabled={publishState === "busy"}><Send size={18} />{publishState === "busy" ? "正在准备…" : publishState === "done" ? "已打开笔记发布" : "发布到小红书"}</button>
+              {publishHint ? <p className="xhs-publish-hint">{publishHint}</p> : null}
             </div>
           </aside>
         </div>
 
-        <footer className="xhs-footer"><div><LayoutTemplate size={16} /> 薯光内容工作台</div><p>非小红书官方产品 · <a href="/privacy">隐私说明</a> · 请在发布前核实内容与平台规范</p><div><FileText size={15} /> 草稿仅保存在本机</div></footer>
+        <footer className="xhs-footer"><div><LayoutTemplate size={16} /> 薯光内容工作台</div><p>非小红书官方产品 · <button className="xhs-footer-link" type="button" onClick={() => setShowPrivacy(true)}>隐私说明</button> · 请在发布前核实内容与平台规范</p><div><FileText size={15} /> 草稿仅保存在本机</div></footer>
       </main>
+
+      <div className="xhs-minitool-dock">
+        <button className="xhs-ghost-button" type="button" onClick={() => setShowPrivacy(true)}>隐私</button>
+        <button className="xhs-copy-all" type="button" onClick={copyAll}><Copy size={16} /> 全文</button>
+        <button className="xhs-publish" type="button" onClick={() => void publishNote()} disabled={publishState === "busy"}><Send size={16} />{publishState === "busy" ? "准备中" : "发布"}</button>
+      </div>
+
+      {copySheet ? (
+        <div className="xhs-sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="copy-sheet-title">
+          <div className="xhs-sheet">
+            <div className="xhs-sheet-head">
+              <div>
+                <p className="xhs-sheet-kicker">长按文本后复制</p>
+                <h3 id="copy-sheet-title">{copySheet.title}</h3>
+              </div>
+              <button type="button" className="xhs-sheet-close" aria-label="关闭" onClick={() => setCopySheet(null)}><X size={18} /></button>
+            </div>
+            <p className="xhs-sheet-tip">小工具不能直接写入剪贴板。请长按下方文本，选择复制。</p>
+            <textarea className="xhs-copy-text" readOnly value={copySheet.text} />
+            <button className="xhs-sheet-done" type="button" onClick={() => setCopySheet(null)}>完成</button>
+          </div>
+        </div>
+      ) : null}
+
+      {showDrafts ? (
+        <div className="xhs-sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="drafts-sheet-title">
+          <div className="xhs-sheet">
+            <div className="xhs-sheet-head">
+              <div>
+                <p className="xhs-sheet-kicker">仅保存在本机</p>
+                <h3 id="drafts-sheet-title">最近草稿</h3>
+              </div>
+              <button type="button" className="xhs-sheet-close" aria-label="关闭" onClick={() => setShowDrafts(false)}><X size={18} /></button>
+            </div>
+            <div className="xhs-sheet-drafts">
+              {history.length === 0 ? <div className="xhs-empty-history"><Clock3 size={17} /><span>保存后会出现在这里</span></div> : history.map((item) => (
+                <div className="xhs-history-item" key={`sheet-${item.id}`}>
+                  <button type="button" onClick={() => { loadDraft(item); setShowDrafts(false); }}>
+                    <span>{item.topic}</span>
+                    <small>{item.contentType} · {new Date(item.createdAt).toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" })}</small>
+                  </button>
+                  <button className="xhs-delete" type="button" aria-label="删除草稿" onClick={() => updateHistory(history.filter((draftItem) => draftItem.id !== item.id))}><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showPrivacy ? (
+        <div className="xhs-sheet-backdrop xhs-privacy-backdrop" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
+          <main className="xhs-legal xhs-legal-sheet">
+            <button className="xhs-legal-back" type="button" onClick={() => setShowPrivacy(false)}>← 返回创作工作台</button>
+            <article>
+              <span className="xhs-legal-kicker">PRIVACY</span>
+              <h1 id="privacy-title">隐私说明</h1>
+              <p className="xhs-legal-updated">更新日期：2026 年 8 月 30 日</p>
+              <section>
+                <h2>你的内容留在哪里</h2>
+                <p>薯光使用内置的结构化创作引擎。你输入的主题、读者、关键词以及保存的草稿，都只保存在当前设备的本地存储中。小工具版本在离线容器中运行，不会向外部服务器发送这些内容。</p>
+              </section>
+              <section>
+                <h2>我们不收集什么</h2>
+                <p>当前版本不要求注册账号，不收集姓名、手机号、邮箱、支付信息，也不使用广告追踪或跨站画像。</p>
+              </section>
+              <section>
+                <h2>如何删除数据</h2>
+                <p>你可以在工作台中删除单篇草稿。清除小红书小工具或浏览器的本地存储后，草稿无法恢复。</p>
+              </section>
+              <section>
+                <h2>内容责任</h2>
+                <p>生成结果用于辅助创作。发布前请核实事实、版权、广告表达与平台规范。薯光不是小红书官方产品。</p>
+              </section>
+            </article>
+          </main>
+        </div>
+      ) : null}
     </div>
   );
 }

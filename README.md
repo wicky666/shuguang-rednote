@@ -30,6 +30,35 @@ npm run build
 npm start
 ```
 
+## 发布到小红书小工具
+
+小红书小工具是离线 H5 容器：不能联网、不能用模块脚本，所有资源必须打进 zip。
+
+```bash
+npm run build:minitool
+```
+
+会生成：
+
+- `minitool-dist/shuguang-minitool.zip`：本地构建产物
+- `releases/shuguang-minitool.zip`：已提交到仓库，可直接从 GitHub 下载上传
+- `releases/shuguang-icon.png`：小工具图标
+
+从 GitHub 直接下载（当前分支）：
+
+- [下载小工具 zip](https://github.com/wicky666/shuguang-rednote/raw/cursor/xhs-minitool-aee4/releases/shuguang-minitool.zip)
+- [下载图标 png](https://github.com/wicky666/shuguang-rednote/raw/cursor/xhs-minitool-aee4/releases/shuguang-icon.png)
+
+上传时建议填写：
+
+- 小工具名称：`薯光`（最多 14 字）
+- 简介：`选题到成稿助手`（最多 14 字）
+- 图标：使用 `releases/shuguang-icon.png` 或 `public/minitool-icon.png`
+- 版本号：`1.0.0`
+- 所需权限：只勾「本地存储」
+
+然后在 [小红书创作服务平台](https://creator.xiaohongshu.com) 的 Builder hub → 小工具 中上传 zip。部署成功后用页面上的二维码在手机上打开。审核通过后，其他用户即可在小红书里使用。
+
 ## 技术说明
 
 - Vinext + React 19 + TypeScript
