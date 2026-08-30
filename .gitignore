@@ -22,6 +22,8 @@
 # production
 /build
 /dist/
+/minitool-dist/
+/.skill/
 /.site-deploy.tar.gz
 /.wrangler/
 /.vinext/

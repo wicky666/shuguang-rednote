@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/build.mjs",
+    "build:minitool": "node scripts/build-minitool.mjs",
     "start": "vite preview",
     "lint": "oxlint",
     "format": "oxfmt"
