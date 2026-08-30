@@ -361,7 +361,7 @@ html.minitool .xhs-shell {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
-  padding-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(72px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
 }
 
 html.minitool textarea, html.minitool input, html.minitool .xhs-copy-text {
@@ -408,3 +408,14 @@ html.minitool .xhs-panel { padding: 18px 16px; }
 html.minitool .xhs-type-grid { grid-template-columns: 1fr 1fr; }
 html.minitool .xhs-two-fields { grid-template-columns: 1fr; gap: 0; }
 html.minitool .xhs-footer { padding: 18px; flex-direction: column; gap: 8px; text-align: center; }
+html.minitool .xhs-minitool-dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: grid; grid-template-columns: auto 1fr 1fr; gap: 8px; align-items: center;
+  padding: 10px 12px calc(10px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  border-top: 1px solid var(--xhs-line); background: rgba(255,255,255,.96);
+}
+html.minitool .xhs-minitool-dock .xhs-copy-all,
+html.minitool .xhs-minitool-dock .xhs-publish { height: 42px; margin: 0; }
+html.minitool .xhs-minitool-dock .xhs-ghost-button { height: 42px; }
+
+.xhs-minitool-dock { display: none; }

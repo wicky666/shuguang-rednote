@@ -360,6 +360,12 @@ export function RedNoteStudio() {
         <footer className="xhs-footer"><div><LayoutTemplate size={16} /> 薯光内容工作台</div><p>非小红书官方产品 · <button className="xhs-footer-link" type="button" onClick={() => setShowPrivacy(true)}>隐私说明</button> · 请在发布前核实内容与平台规范</p><div><FileText size={15} /> 草稿仅保存在本机</div></footer>
       </main>
 
+      <div className="xhs-minitool-dock">
+        <button className="xhs-ghost-button" type="button" onClick={() => setShowPrivacy(true)}>隐私</button>
+        <button className="xhs-copy-all" type="button" onClick={copyAll}><Copy size={16} /> 全文</button>
+        <button className="xhs-publish" type="button" onClick={() => void publishNote()} disabled={publishState === "busy"}><Send size={16} />{publishState === "busy" ? "准备中" : "发布"}</button>
+      </div>
+
       {copySheet ? (
         <div className="xhs-sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="copy-sheet-title">
           <div className="xhs-sheet">
